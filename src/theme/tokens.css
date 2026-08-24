@@ -1,0 +1,75 @@
+/* theme/tokens.css — SahaKarya Shared Design System Tokens */
+:root {
+  /* Exact Brand Palette Tokens */
+  --color-teal: #1B4B43;
+  --color-teal-dark: #12332e;
+  --color-teal-light: #25655b;
+  --color-teal-subtle: #e8f0ee;
+  
+  --color-orange: #FF6B35;
+  --color-orange-dark: #e0531f;
+  --color-orange-light: #ff8559;
+  --color-orange-subtle: #fff1eb;
+
+  --color-gold: #FFC145;
+  --color-gold-dark: #e5a62a;
+  --color-gold-subtle: #fff9eb;
+
+  --color-bg: #F7F3E9;
+  --color-bg-card: #FFFFFF;
+  --color-bg-subtle: #F0EAD8;
+  --color-bg-elevated: #FFFFFF;
+
+  --color-ink: #1A1A1A;
+  --color-ink-muted: #5A6065;
+  --color-ink-faint: #8C949B;
+  --color-border: rgba(27, 75, 67, 0.12);
+  --color-border-subtle: rgba(27, 75, 67, 0.06);
+
+  /* Status Colors */
+  --color-success: #1E824C;
+  --color-success-bg: #E8F8F0;
+  --color-warning: #D97706;
+  --color-warning-bg: #FEF3C7;
+  --color-danger: #DC2626;
+  --color-danger-bg: #FEE2E2;
+  --color-info: #0284C7;
+  --color-info-bg: #E0F2FE;
+
+  /* Typography Tokens */
+  --font-display: 'Sora', sans-serif;
+  --font-body: 'Inter', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  /* Shadows */
+  --shadow-card: 0 1px 3px rgba(27, 75, 67, 0.04), 0 4px 12px rgba(27, 75, 67, 0.03);
+  --shadow-card-hover: 0 4px 6px rgba(27, 75, 67, 0.05), 0 10px 24px rgba(27, 75, 67, 0.08);
+  --shadow-dropdown: 0 10px 25px -5px rgba(27, 75, 67, 0.15), 0 8px 10px -6px rgba(27, 75, 67, 0.1);
+}
+
+/* Base font family declarations */
+body {
+  font-family: var(--font-body);
+  background-color: var(--color-bg);
+  color: var(--color-ink);
+}
+
+h1, h2, h3, h4, h5, h6, .font-display {
+  font-family: var(--font-display);
+}
+
+code, pre, .font-mono {
+  font-family: var(--font-mono);
+}
+
+/* Reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
