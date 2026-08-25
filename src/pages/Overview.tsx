@@ -64,7 +64,7 @@ export const Overview: React.FC = () => {
     fetchDashboardData();
   }, [currentFederation?.id, liveUpdatesCount]);
 
-  // 7-day revenue velocity demo chart data
+  // DEMO PLACEHOLDER — hardcoded sample series, not fetched from the backend
   const revenueTrendData = [
     { day: 'Mon', revenue: 5400, bookings: 14, welfare: 270 },
     { day: 'Tue', revenue: 6200, bookings: 16, welfare: 310 },
@@ -75,7 +75,7 @@ export const Overview: React.FC = () => {
     { day: 'Sun', revenue: 8900, bookings: 23, welfare: 445 },
   ];
 
-  // Service Category Breakdown
+  // DEMO PLACEHOLDER — hardcoded category counts, not fetched from the backend
   const categoryData = [
     { category: 'Electrician', count: 32, fill: '#1B4B43' },
     { category: 'Plumber', count: 26, fill: '#25655b' },
@@ -235,11 +235,16 @@ export const Overview: React.FC = () => {
         <div className="lg:col-span-2 bg-white rounded-3xl p-6 border border-[#1B4B43]/12 shadow-xs flex flex-col justify-between">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 border-b border-[#1B4B43]/8">
             <div>
-              <h2 className="text-base font-bold text-[#1A1A1A] font-display">
-                Weekly Revenue & Welfare Velocity
-              </h2>
+              <div className="flex items-center gap-1.5">
+                <h2 className="text-base font-bold text-[#1A1A1A] font-display">
+                  Weekly Revenue & Welfare Velocity
+                </h2>
+                <span className="text-[9px] px-1.5 py-0.5 rounded bg-[#FFF1EB] text-[#FF6B35] font-bold uppercase font-mono">
+                  demo
+                </span>
+              </div>
               <p className="text-xs text-[#1A1A1A]/60 font-body">
-                Transaction GMV vs 5% Institutional Welfare Accumulation
+                Transaction GMV vs 5% Institutional Welfare Accumulation (sample data)
               </p>
             </div>
             <div className="flex items-center gap-4 text-xs font-semibold">
@@ -310,11 +315,16 @@ export const Overview: React.FC = () => {
         {/* Right 1 Col: Category Trade Distribution */}
         <div className="bg-white rounded-3xl p-6 border border-[#1B4B43]/12 shadow-xs flex flex-col justify-between">
           <div>
-            <h2 className="text-base font-bold text-[#1A1A1A] font-display">
-              Skill Trade Breakdown
-            </h2>
+            <div className="flex items-center gap-1.5">
+              <h2 className="text-base font-bold text-[#1A1A1A] font-display">
+                Skill Trade Breakdown
+              </h2>
+              <span className="text-[9px] px-1.5 py-0.5 rounded bg-[#FFF1EB] text-[#FF6B35] font-bold uppercase font-mono">
+                demo
+              </span>
+            </div>
             <p className="text-xs text-[#1A1A1A]/60 font-body">
-              Completed bookings by trade category
+              Completed bookings by trade category (sample data)
             </p>
           </div>
 

@@ -21,7 +21,7 @@ import {
 } from 'recharts';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../api/endpoints';
-import type { ForecastResponse, ModelInfo } from '../types';
+import type { ForecastResponse } from '../types';
 import { ChartSkeleton } from '../components/common/SkeletonLoader';
 import { ErrorState } from '../components/common/ErrorState';
 
@@ -31,23 +31,21 @@ export const DemandForecast: React.FC = () => {
   const [region, setRegion] = useState('north');
   const [serviceType, setServiceType] = useState('electrician');
   const [forecastData, setForecastData] = useState<ForecastResponse | null>(null);
-  const [modelInfo, setModelInfo] = useState<ModelInfo | null>(null);
 
   const [loading, setLoading] = useState(true);
   const [training, setTraining] = useState(false);
   const [trainResult, setTrainResult] = useState<any | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  // Contract nests model_info inside the forecast response
+  const modelInfo = forecastData?.model_info ?? null;
+
   const fetchForecast = async () => {
     setLoading(true);
     setError(null);
     try {
-      const [fData, mData] = await Promise.all([
-        api.getDemandForecast(currentFederation?.id || 'fed_01', region, serviceType),
-        api.getModelInfo(),
-      ]);
+      const fData = await api.getDemandForecast(currentFederation?.id || 'fed_01', region, serviceType);
       setForecastData(fData);
-      setModelInfo(mData);
     } catch (err: any) {
       setError(err?.message || 'Failed to generate AI demand forecast');
     } finally {
@@ -90,6 +88,12 @@ export const DemandForecast: React.FC = () => {
     { id: 'painter', label: 'Painter' },
   ];
 
+  // Derived stats from the real forecast payload
+  const daily = forecastData?.daily_forecast ?? [];
+  const peakDay = daily.length
+    ? daily.reduce((a, b) => (b.predicted_bookings > a.predicted_bookings ? b : a))
+    : null;
+
   return (
     <div className="space-y-6 animate-slide-up-fade">
       {/* Header */}
@@ -128,7 +132,7 @@ export const DemandForecast: React.FC = () => {
             <span>{trainResult.message}</span>
           </div>
           <div className="font-mono text-[11px] font-bold">
-            MAE: {trainResult.mae?.toFixed(2)} | R²: {trainResult.r2_score?.toFixed(3) || '0.962'}
+            MAE: {trainResult.mae?.toFixed(2) ?? '—'} | R²: {trainResult.r2?.toFixed(3) ?? '—'}
           </div>
         </div>
       )}
@@ -214,14 +218,14 @@ export const DemandForecast: React.FC = () => {
           ) : (
             <div className="h-72 w-full pt-4">
               <ResponsiveContainer width="100%" height="100%">
-                <ComposedChart data={forecastData.forecast} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+                <ComposedChart data={forecastData.daily_forecast} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(27, 75, 67, 0.06)" vertical={false} />
                   <XAxis
-                    dataKey="day_name"
+                    dataKey="day_of_week"
                     stroke="#5A6065"
                     fontSize={11}
                     tickLine={false}
-                    tickFormatter={(val, i) => `${val || forecastData.forecast[i]?.date.slice(5)}`}
+                    tickFormatter={(val: string, i: number) => val || forecastData.daily_forecast[i]?.date.slice(5) || ''}
                   />
                   <YAxis stroke="#5A6065" fontSize={11} tickLine={false} />
                   <Tooltip
@@ -234,11 +238,11 @@ export const DemandForecast: React.FC = () => {
                     }}
                     formatter={(val: any, name: any) => [
                       `${val} Projected Bookings`,
-                      name === 'predicted_demand' ? 'Expected Volume' : name,
+                      name === 'predicted_bookings' ? 'Expected Volume' : name,
                     ]}
                   />
                   <Bar
-                    dataKey="predicted_demand"
+                    dataKey="predicted_bookings"
                     fill="#1B4B43"
                     radius={[6, 6, 0, 0]}
                     maxBarSize={45}
@@ -246,7 +250,7 @@ export const DemandForecast: React.FC = () => {
                   />
                   <Line
                     type="monotone"
-                    dataKey="predicted_demand"
+                    dataKey="predicted_bookings"
                     stroke="#FF6B35"
                     strokeWidth={3}
                     dot={{ r: 4, fill: '#FF6B35', strokeWidth: 2, stroke: '#FFFFFF' }}
@@ -262,11 +266,15 @@ export const DemandForecast: React.FC = () => {
             <div className="flex items-center gap-1.5 text-[#1B4B43] font-bold">
               <Flame size={14} className="text-[#FF6B35]" />
               <span>
-                Peak Demand Expected on Weekend (+35% surge in {serviceType} requests)
+                {peakDay
+                  ? `Peak Demand: ${peakDay.day_of_week || peakDay.date} — ${peakDay.predicted_bookings} projected bookings${
+                      peakDay.is_weekend ? ' (weekend surge)' : ''
+                    }`
+                  : 'Peak demand will appear once forecast data loads'}
               </span>
             </div>
             <span className="text-[11px] text-[#1A1A1A]/50 font-mono">
-              Confidence Interval: ±1.2 bookings/day
+              {daily.length} days projected{modelInfo ? ` • trained ${new Date(modelInfo.training_timestamp).toLocaleDateString()}` : ''}
             </span>
           </div>
         </div>
@@ -290,36 +298,39 @@ export const DemandForecast: React.FC = () => {
             <div className="p-3 rounded-2xl bg-[#1B4B43]/5 border border-[#1B4B43]/10 flex justify-between items-center">
               <span className="text-xs font-bold text-[#1A1A1A]/70">Model Architecture</span>
               <span className="text-xs font-extrabold text-[#1B4B43] font-mono">
-                GradientBoosting (100 Trees)
+                {modelInfo?.model_type || 'GradientBoosting'}
               </span>
             </div>
 
             <div className="p-3 rounded-2xl bg-[#E8F8F0] border border-[#1E824C]/20 flex justify-between items-center">
               <span className="text-xs font-bold text-[#1E824C]">Model Accuracy (R² Score)</span>
               <span className="text-sm font-extrabold text-[#1E824C] font-mono">
-                {modelInfo?.r2_score ? modelInfo.r2_score.toFixed(3) : '0.958'}
+                {modelInfo?.metrics.r2 != null ? modelInfo.metrics.r2.toFixed(3) : '—'}
               </span>
             </div>
 
             <div className="p-3 rounded-2xl bg-[#FFF1EB] border border-[#FF6B35]/20 flex justify-between items-center">
               <span className="text-xs font-bold text-[#C2410C]">Mean Absolute Error (MAE)</span>
               <span className="text-sm font-extrabold text-[#C2410C] font-mono">
-                {modelInfo?.mae ? `${modelInfo.mae.toFixed(2)} bookings/day` : '0.84 bookings/day'}
+                {modelInfo?.metrics.mae != null ? `${modelInfo.metrics.mae.toFixed(2)} bookings/day` : '—'}
               </span>
             </div>
 
             <div className="p-3 rounded-2xl bg-gray-50 border border-gray-200 flex justify-between items-center">
               <span className="text-xs font-bold text-gray-700">Trained Booking Samples</span>
               <span className="text-xs font-bold text-gray-900 font-mono">
-                {modelInfo?.trained_samples?.toLocaleString() || '2,880 rows'}
+                {modelInfo?.train_samples != null ? modelInfo.train_samples.toLocaleString() : '—'}
               </span>
             </div>
           </div>
 
           {/* Feature Importance Breakdown */}
           <div>
-            <h4 className="text-xs font-bold text-[#1A1A1A] uppercase tracking-wider mb-2 font-display">
-              Feature Importance Ranking
+            <h4 className="text-xs font-bold text-[#1A1A1A] uppercase tracking-wider mb-2 font-display flex items-center gap-1.5">
+              <span>Feature Importance Ranking</span>
+              <span className="text-[9px] px-1.5 py-0.5 rounded bg-[#FFF1EB] text-[#FF6B35] font-bold normal-case tracking-normal">
+                demo
+              </span>
             </h4>
             <div className="space-y-1.5 text-xs font-body">
               <div className="flex justify-between items-center">

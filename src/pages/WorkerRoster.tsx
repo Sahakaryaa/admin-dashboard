@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../api/endpoints';
-import type { Worker } from '../types';
+import type { CertificationStatus, Worker } from '../types';
 import { StatusPill } from '../components/common/StatusPill';
 import { CooperativeBadge } from '../components/common/CooperativeBadge';
 import { TableSkeleton } from '../components/common/SkeletonLoader';
@@ -27,7 +27,7 @@ export const WorkerRoster: React.FC = () => {
   // Filters & Search
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSkill, setSelectedSkill] = useState<string>('all');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'verified' | 'pending'>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | CertificationStatus>('all');
   const [availabilityFilter, setAvailabilityFilter] = useState<'all' | 'online' | 'offline'>('all');
 
   // Selected worker for Drawer inspection
@@ -51,8 +51,8 @@ export const WorkerRoster: React.FC = () => {
     fetchWorkers();
   }, [currentFederation?.id]);
 
-  const handleToggleCertification = async (workerId: string, currentStatus: 'verified' | 'pending') => {
-    const newStatus = currentStatus === 'verified' ? 'pending' : 'verified';
+  const handleToggleCertification = async (workerId: string, currentStatus: CertificationStatus) => {
+    const newStatus: CertificationStatus = currentStatus === 'verified' ? 'pending' : 'verified';
     try {
       await api.updateWorkerCertification(workerId, newStatus);
       setWorkers((prev) =>
@@ -173,6 +173,7 @@ export const WorkerRoster: React.FC = () => {
               <option value="all">All Certifications</option>
               <option value="verified">Verified Only</option>
               <option value="pending">Pending Vetting</option>
+              <option value="rejected">Rejected</option>
             </select>
           </div>
 
@@ -265,7 +266,7 @@ export const WorkerRoster: React.FC = () => {
                     <td className="py-3.5 px-4">
                       <div className="flex items-center gap-3">
                         <div className="w-9 h-9 rounded-xl bg-[#1B4B43]/10 text-[#1B4B43] font-bold flex items-center justify-center text-sm shrink-0 shadow-2xs">
-                          {worker.name[0]}
+                          {worker.name?.[0] || '?'}
                         </div>
                         <div>
                           <div className="font-bold text-sm text-[#1A1A1A] font-display flex items-center gap-1.5">
@@ -318,6 +319,8 @@ export const WorkerRoster: React.FC = () => {
                     <td className="py-3.5 px-4">
                       {worker.certification_status === 'verified' ? (
                         <CooperativeBadge size="sm" />
+                      ) : worker.certification_status === 'rejected' ? (
+                        <StatusPill status="rejected" label="Certification Rejected" size="sm" />
                       ) : (
                         <StatusPill status="pending" label="Pending Vetting" size="sm" />
                       )}
@@ -334,22 +337,22 @@ export const WorkerRoster: React.FC = () => {
                       onClick={(e) => e.stopPropagation()} // Prevent row click
                     >
                       <div className="flex items-center justify-end gap-2">
-                        {worker.certification_status === 'pending' ? (
-                          <button
-                            onClick={() => handleToggleCertification(worker.id, 'pending')}
-                            className="px-2.5 py-1.5 bg-[#1B4B43] hover:bg-[#12332e] text-white text-xs font-bold rounded-lg transition-colors shadow-2xs flex items-center gap-1"
-                            title="Approve Trade Certificate & Issue Cooperative Badge"
-                          >
-                            <ShieldCheck size={13} className="text-[#FFC145]" />
-                            <span>Approve</span>
-                          </button>
-                        ) : (
+                        {worker.certification_status === 'verified' ? (
                           <button
                             onClick={() => handleToggleCertification(worker.id, 'verified')}
                             className="px-2.5 py-1.5 bg-gray-100 hover:bg-[#FEE2E2] text-gray-700 hover:text-[#991B1B] text-xs font-medium rounded-lg transition-colors"
                             title="Revoke Verification"
                           >
                             Revoke
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => handleToggleCertification(worker.id, worker.certification_status)}
+                            className="px-2.5 py-1.5 bg-[#1B4B43] hover:bg-[#12332e] text-white text-xs font-bold rounded-lg transition-colors shadow-2xs flex items-center gap-1"
+                            title="Approve Trade Certificate & Issue Cooperative Badge"
+                          >
+                            <ShieldCheck size={13} className="text-[#FFC145]" />
+                            <span>Approve</span>
                           </button>
                         )}
                         <button
@@ -393,7 +396,7 @@ export const WorkerRoster: React.FC = () => {
               {/* Profile Card */}
               <div className="mt-5 p-4 rounded-2xl bg-[#F7F3E9]/80 border border-[#1B4B43]/15 text-center">
                 <div className="w-16 h-16 rounded-2xl bg-[#1B4B43] text-white text-2xl font-bold flex items-center justify-center mx-auto shadow-md font-display">
-                  {selectedWorker.name[0]}
+                  {selectedWorker.name?.[0] || '?'}
                 </div>
                 <h4 className="text-lg font-bold text-[#1A1A1A] mt-2.5 font-display">
                   {selectedWorker.name}
@@ -404,6 +407,8 @@ export const WorkerRoster: React.FC = () => {
                 <div className="mt-3 flex justify-center">
                   {selectedWorker.certification_status === 'verified' ? (
                     <CooperativeBadge size="md" variant="glow" />
+                  ) : selectedWorker.certification_status === 'rejected' ? (
+                    <StatusPill status="rejected" label="Certification Rejected" />
                   ) : (
                     <StatusPill status="pending" label="Vetting Required" />
                   )}
@@ -465,16 +470,18 @@ export const WorkerRoster: React.FC = () => {
               <button
                 onClick={() => handleToggleCertification(selectedWorker.id, selectedWorker.certification_status)}
                 className={`w-full py-2.5 px-4 rounded-xl text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-2 ${
-                  selectedWorker.certification_status === 'pending'
-                    ? 'bg-[#1B4B43] text-white hover:bg-[#12332e]'
-                    : 'bg-[#FEE2E2] text-[#991B1B] hover:bg-[#FEE2E2]/80'
+                  selectedWorker.certification_status === 'verified'
+                    ? 'bg-[#FEE2E2] text-[#991B1B] hover:bg-[#FEE2E2]/80'
+                    : 'bg-[#1B4B43] text-white hover:bg-[#12332e]'
                 }`}
               >
                 <ShieldCheck size={15} />
                 <span>
-                  {selectedWorker.certification_status === 'pending'
-                    ? 'Approve Skill Certification'
-                    : 'Revoke Cooperative Verification'}
+                  {selectedWorker.certification_status === 'verified'
+                    ? 'Revoke Cooperative Verification'
+                    : selectedWorker.certification_status === 'rejected'
+                    ? 'Reinstate & Approve Skill Certification'
+                    : 'Approve Skill Certification'}
                 </span>
               </button>
 

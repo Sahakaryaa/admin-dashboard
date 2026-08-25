@@ -8,7 +8,6 @@ import type {
   Booking,
   FederationWelfareOverview,
   ForecastResponse,
-  ModelInfo,
 } from '../types';
 
 export const DEMO_FEDERATION: Federation = {
@@ -415,36 +414,22 @@ export const DEMO_WELFARE: FederationWelfareOverview = {
   ],
 };
 
+// Shape mirrors the contract: GET /forecast/{region} (snake_case, nested model_info)
 export const DEMO_FORECAST: ForecastResponse = {
   region: 'north',
-  service_type: 'electrician',
-  average_daily_demand: 11,
-  peak_day: 'Saturday',
-  generated_at: new Date().toISOString(),
-  forecast: [
-    { date: '2026-08-25', day_name: 'Tue', predicted_demand: 9, confidence_lower: 7, confidence_upper: 11, is_weekend: false },
-    { date: '2026-08-26', day_name: 'Wed', predicted_demand: 10, confidence_lower: 8, confidence_upper: 12, is_weekend: false },
-    { date: '2026-08-27', day_name: 'Thu', predicted_demand: 11, confidence_lower: 9, confidence_upper: 13, is_weekend: false },
-    { date: '2026-08-28', day_name: 'Fri', predicted_demand: 12, confidence_lower: 10, confidence_upper: 15, is_weekend: false },
-    { date: '2026-08-29', day_name: 'Sat', predicted_demand: 16, confidence_lower: 13, confidence_upper: 19, is_weekend: true },
-    { date: '2026-08-30', day_name: 'Sun', predicted_demand: 15, confidence_lower: 12, confidence_upper: 18, is_weekend: true },
-    { date: '2026-08-31', day_name: 'Mon', predicted_demand: 8, confidence_lower: 6, confidence_upper: 10, is_weekend: false },
+  daily_forecast: [
+    { date: '2026-08-25', predicted_bookings: 9, day_of_week: 'Tuesday', is_weekend: false },
+    { date: '2026-08-26', predicted_bookings: 10, day_of_week: 'Wednesday', is_weekend: false },
+    { date: '2026-08-27', predicted_bookings: 11, day_of_week: 'Thursday', is_weekend: false },
+    { date: '2026-08-28', predicted_bookings: 12, day_of_week: 'Friday', is_weekend: false },
+    { date: '2026-08-29', predicted_bookings: 16, day_of_week: 'Saturday', is_weekend: true },
+    { date: '2026-08-30', predicted_bookings: 15, day_of_week: 'Sunday', is_weekend: true },
+    { date: '2026-08-31', predicted_bookings: 8, day_of_week: 'Monday', is_weekend: false },
   ],
-};
-
-export const DEMO_MODEL_INFO: ModelInfo = {
-  model_type: 'GradientBoostingRegressor (Ensemble Trees)',
-  mae: 0.84,
-  rmse: 1.12,
-  r2_score: 0.958,
-  trained_samples: 2880,
-  trained_at: new Date(Date.now() - 2 * 3600000).toISOString(),
-  feature_importances: {
-    rolling_7d_avg: 0.42,
-    is_weekend: 0.23,
-    service_encoded: 0.16,
-    region_encoded: 0.11,
-    day_of_month: 0.05,
-    weekday: 0.03,
+  model_info: {
+    model_type: 'GradientBoostingRegressor (Ensemble Trees)',
+    metrics: { mae: 0.84, rmse: 1.12, r2: 0.958 },
+    train_samples: 2880,
+    training_timestamp: new Date(Date.now() - 2 * 3600000).toISOString(),
   },
 };

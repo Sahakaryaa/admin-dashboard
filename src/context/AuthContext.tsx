@@ -45,6 +45,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
   }, []);
 
+  // Restore/validate persisted session against the backend (contract: GET /auth/me).
+  // Only hard-logout on explicit 401; ignore network failures so offline demo sessions survive.
+  useEffect(() => {
+    if (!session) return;
+    const token = localStorage.getItem('sahakarya_token');
+    if (!token) return;
+    api
+      .getCurrentUser()
+      .then((user) => {
+        const refreshed: AuthSession = { access_token: token, token_type: 'bearer', user };
+        setSession(refreshed);
+        localStorage.setItem('sahakarya_session', JSON.stringify(refreshed));
+      })
+      .catch((err: any) => {
+        if (err?.response?.status === 401) {
+          console.warn('[Auth] Stored token rejected by /auth/me — clearing session');
+          localStorage.removeItem('sahakarya_token');
+          localStorage.removeItem('sahakarya_session');
+          setSession(null);
+        }
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const login = async (phone: string, pass: string) => {
     setIsLoading(true);
     try {

@@ -21,7 +21,7 @@ import { ErrorState } from '../components/common/ErrorState';
 
 export const LiveBookings: React.FC = () => {
   const { currentFederation } = useAuth();
-  const { isConnected, lastUpdatedBooking } = useSocket();
+  const { isConnected, lastStatusUpdate } = useSocket();
 
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
@@ -53,28 +53,27 @@ export const LiveBookings: React.FC = () => {
     fetchBookings();
   }, [currentFederation?.id]);
 
-  // Merge live Socket.IO booking updates
+  // Merge live Socket.IO status updates (contract `status_update` payload)
   useEffect(() => {
-    if (lastUpdatedBooking) {
-      setBookings((prev) => {
-        const index = prev.findIndex((b) => b.id === lastUpdatedBooking.id);
-        if (index >= 0) {
-          const updated = [...prev];
-          updated[index] = lastUpdatedBooking;
-          return updated;
-        }
-        return [lastUpdatedBooking, ...prev];
-      });
+    if (!lastStatusUpdate) return;
+    const { booking_id: bookingId, new_status: newStatus } = lastStatusUpdate;
 
-      if (selectedBooking?.id === lastUpdatedBooking.id) {
-        setSelectedBooking(lastUpdatedBooking);
-      }
-    }
-  }, [lastUpdatedBooking]);
+    setBookings((prev) =>
+      prev.map((b) => (b.id === bookingId ? { ...b, status: (newStatus as BookingStatus) ?? b.status } : b))
+    );
+
+    setSelectedBooking((prev) =>
+      prev && prev.id === bookingId ? { ...prev, status: (newStatus as BookingStatus) ?? prev.status } : prev
+    );
+  }, [lastStatusUpdate]);
 
   const handleAdminStatusChange = async (bookingId: string, newStatus: string) => {
     try {
-      await api.updateBookingStatus(bookingId, newStatus);
+      const updated = await api.updateBookingStatus(bookingId, newStatus);
+      if (!updated) {
+        alert(`Status update for booking #${bookingId} could not be confirmed. It may not exist.`);
+        return;
+      }
       setBookings((prev) =>
         prev.map((b) => (b.id === bookingId ? { ...b, status: newStatus as BookingStatus } : b))
       );

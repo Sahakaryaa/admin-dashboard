@@ -99,7 +99,10 @@ export const Header: React.FC = () => {
                 <span className="text-xs font-bold text-[#1A1A1A] font-display">
                   Federation Alerts
                 </span>
-                <span className="text-[10px] text-[#1B4B43] font-bold">
+                <span className="flex items-center gap-1.5 text-[10px] text-[#1B4B43] font-bold">
+                  <span className="px-1.5 py-0.5 rounded bg-[#FFF1EB] text-[#FF6B35] font-bold uppercase font-mono">
+                    demo
+                  </span>
                   2 Pending
                 </span>
               </div>

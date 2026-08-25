@@ -11,13 +11,11 @@ export interface User {
   created_at: string;
 }
 
+// Contract TokenResponse = {access_token, token_type, user: UserResponse}
 export interface AuthSession {
   access_token: string;
   token_type: string;
-  user_id: string;
-  role: UserRole;
-  name: string;
-  phone: string;
+  user: User;
 }
 
 export interface Federation {
@@ -34,7 +32,8 @@ export interface GeoLocation {
 }
 
 export type WorkerAvailability = 'online' | 'offline';
-export type CertificationStatus = 'pending' | 'verified';
+// Contract: certification: "pending" | "verified" | "rejected"
+export type CertificationStatus = 'pending' | 'verified' | 'rejected';
 
 export interface Worker {
   id: string;
@@ -121,30 +120,32 @@ export interface FederationWelfareOverview {
   recent_transactions: WelfareTransaction[];
 }
 
+// Contract: GET /forecast/{region} -> snake_case shape with nested model_info
 export interface DayForecast {
   date: string;
-  day_name?: string;
-  predicted_demand: number;
-  confidence_lower?: number;
-  confidence_upper?: number;
+  predicted_bookings: number;
+  day_of_week?: string;
   is_weekend?: boolean;
+}
+
+export interface ForecastModelMetrics {
+  mae: number;
+  rmse: number;
+  r2: number;
+}
+
+export interface ForecastModelInfo {
+  model_type: string;
+  metrics: ForecastModelMetrics;
+  train_samples: number;
+  training_timestamp: string;
 }
 
 export interface ForecastResponse {
   region: string;
-  service_type: string;
-  forecast: DayForecast[];
-  average_daily_demand?: number;
-  peak_day?: string;
-  generated_at?: string;
+  daily_forecast: DayForecast[];
+  model_info: ForecastModelInfo;
 }
 
-export interface ModelInfo {
-  model_type: string;
-  mae: number;
-  rmse?: number;
-  r2_score?: number;
-  trained_samples?: number;
-  trained_at?: string;
-  feature_importances?: Record<string, number>;
-}
+// Alias kept for callers that only need the nested model info block
+export type ModelInfo = ForecastModelInfo;

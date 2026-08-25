@@ -9,8 +9,8 @@ export const Login: React.FC = () => {
   const { login, loginDemo, isLoading } = useAuth();
   const navigate = useNavigate();
 
-  const [phone, setPhone] = useState('9999900000');
-  const [password, setPassword] = useState('admin123');
+  const [phone, setPhone] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -30,8 +30,11 @@ export const Login: React.FC = () => {
       await loginDemo();
       navigate('/overview');
     } catch (err: any) {
-      setError('Demo login encountered an error. Retrying with memory session.');
-      navigate('/overview');
+      // Stay on the login page — surface the failure instead of navigating away.
+      setError(
+        err?.response?.data?.detail ||
+          'Demo login failed. The demo pair (9999900000 / admin123) is only accepted while the backend is unreachable.'
+      );
     }
   };
 

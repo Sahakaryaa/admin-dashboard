@@ -4,12 +4,13 @@ import type {
   AuthSession,
   Federation,
   FederationOverview,
+  User,
   Worker,
   Booking,
+  CertificationStatus,
   FederationWelfareOverview,
   WelfareTransaction,
   ForecastResponse,
-  ModelInfo,
 } from '../types';
 import {
   DEMO_FEDERATION,
@@ -18,7 +19,6 @@ import {
   DEMO_BOOKINGS,
   DEMO_WELFARE,
   DEMO_FORECAST,
-  DEMO_MODEL_INFO,
 } from '../data/mockData';
 
 // In-memory demo state for mutation feedback during offline demos
@@ -37,19 +37,30 @@ export const api = {
       const { data } = await apiClient.post<AuthSession>('/auth/login', { phone, password });
       return data;
     } catch (err) {
-      console.warn('[API fallback] Using demo credentials handler:', err);
-      if (phone === '9999900000' || password === 'admin123' || phone) {
+      console.warn('[API fallback] Backend unreachable — checking offline demo credentials:', err);
+      // Offline/demo login ONLY for the fixed demo pair. Never authenticate arbitrary phones.
+      if (phone === '9999900000' && password === 'admin123') {
         return {
           access_token: 'demo_jwt_token_sahakarya_federation_admin_2026',
           token_type: 'bearer',
-          user_id: 'user_admin_01',
-          role: 'admin',
-          name: 'Rajesh Sharma (Federation Secretary)',
-          phone: phone || '9999900000',
+          user: {
+            id: 'user_admin_01',
+            phone: '9999900000',
+            name: 'Rajesh Sharma (Federation Secretary)',
+            role: 'admin',
+            language_pref: 'en',
+            created_at: new Date(Date.now() - 90 * 86400000).toISOString(),
+          },
         };
       }
       throw err;
     }
+  },
+
+  // Session restore/validation (contract: GET /auth/me with Bearer token)
+  getCurrentUser: async (): Promise<User> => {
+    const { data } = await apiClient.get<User>('/auth/me');
+    return data;
   },
 
   // Federations
@@ -85,9 +96,10 @@ export const api = {
     }
   },
 
-  updateWorkerCertification: async (workerId: string, status: 'verified' | 'pending'): Promise<{ message: string }> => {
+  updateWorkerCertification: async (workerId: string, status: CertificationStatus): Promise<{ message: string }> => {
     try {
-      const { data } = await apiClient.patch<{ message: string }>(`/workers/${workerId}/certification`, { status });
+      // Contract body key is `certification` (PATCH /workers/{worker_id}/certification)
+      const { data } = await apiClient.patch<{ message: string }>(`/workers/${workerId}/certification`, { certification: status });
       // Update memory state
       memoryWorkers = memoryWorkers.map((w) => (w.id === workerId ? { ...w, certification_status: status } : w));
       return data;
@@ -111,60 +123,41 @@ export const api = {
     }
   },
 
-  updateBookingStatus: async (bookingId: string, status: string): Promise<Booking> => {
+  // Returns null when the booking cannot be confirmed as updated (offline + unknown id).
+  updateBookingStatus: async (bookingId: string, status: string): Promise<Booking | null> => {
     try {
       const { data } = await apiClient.patch<Booking>(`/bookings/${bookingId}/status`, { status });
       memoryBookings = memoryBookings.map((b) => (b.id === bookingId ? { ...b, status: status as any } : b));
       return data;
     } catch {
       memoryBookings = memoryBookings.map((b) => (b.id === bookingId ? { ...b, status: status as any } : b));
-      const found = memoryBookings.find((b) => b.id === bookingId);
-      return found!;
+      return memoryBookings.find((b) => b.id === bookingId) ?? null;
     }
   },
 
-  // AI Demand Forecasting
+  // AI Demand Forecasting — contract: GET /forecast/{region} (snake_case, nested model_info)
   getDemandForecast: async (federationId: string, region = 'north', serviceType = 'electrician'): Promise<ForecastResponse> => {
+    void federationId;
     try {
-      const { data } = await apiClient.get<ForecastResponse>(`/forecast/predictions`, {
-        params: { region, service_type: serviceType },
+      const { data } = await apiClient.get<ForecastResponse>(`/forecast/${encodeURIComponent(region)}`, {
+        params: { service_type: serviceType },
       });
       return data;
     } catch {
-      try {
-        const { data } = await apiClient.get<ForecastResponse>(`/federation/${federationId}/demand-forecast`, {
-          params: { service_type: serviceType },
-        });
-        return data;
-      } catch {
-        return {
-          ...DEMO_FORECAST,
-          region,
-          service_type: serviceType,
-        };
-      }
+      return { ...DEMO_FORECAST, region };
     }
   },
 
-  getModelInfo: async (): Promise<ModelInfo> => {
-    try {
-      const { data } = await apiClient.get<ModelInfo>('/forecast/model-info');
-      return data;
-    } catch {
-      return DEMO_MODEL_INFO;
-    }
-  },
-
-  trainForecastModel: async (): Promise<{ message: string; mae: number; rmse?: number; r2_score?: number }> => {
+  trainForecastModel: async (): Promise<{ message: string; mae?: number; rmse?: number; r2?: number }> => {
     try {
       const { data } = await apiClient.post('/forecast/train');
       return data;
     } catch {
       return {
-        message: 'Demand forecasting gradient boosting model retrained successfully across all 5 operational zones.',
+        message: 'Demand forecasting gradient boosting model retrained successfully across all 5 operational zones. (demo result — backend unreachable)',
         mae: 0.82,
         rmse: 1.08,
-        r2_score: 0.962,
+        r2: 0.962,
       };
     }
   },

@@ -34,7 +34,8 @@ export const Sidebar: React.FC<SidebarProps> = () => {
       to: '/workers',
       label: 'Worker Roster',
       icon: <Users size={18} />,
-      badge: '15 Active',
+      // demo placeholder — not wired to live overview counts
+      badge: '15 Active (demo)',
     },
     {
       to: '/bookings',
@@ -47,7 +48,8 @@ export const Sidebar: React.FC<SidebarProps> = () => {
       to: '/forecast',
       label: 'AI Demand Forecast',
       icon: <TrendingUp size={18} />,
-      badge: 'ML R²=0.96',
+      // demo placeholder — real R² comes from GET /forecast/{region} model_info
+      badge: 'ML R²=0.96 (demo)',
       badgeColor: 'bg-[#FFC145] text-[#1B4B43]',
     },
     {
@@ -141,14 +143,14 @@ export const Sidebar: React.FC<SidebarProps> = () => {
         <div className="flex items-center justify-between p-2 rounded-xl bg-white/10">
           <div className="flex items-center gap-2.5 min-w-0">
             <div className="w-8 h-8 rounded-lg bg-[#FF6B35] text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-xs">
-              {session?.name ? session.name[0] : 'A'}
+              {session?.user.name?.[0] || 'A'}
             </div>
             <div className="min-w-0">
               <div className="text-xs font-bold text-white truncate">
-                {session?.name || 'Federation Admin'}
+                {session?.user.name || 'Federation Admin'}
               </div>
               <div className="text-[10px] text-white/60 truncate font-mono">
-                {session?.phone || '+91 99999 00000'}
+                {session?.user.phone || '+91 99999 00000'}
               </div>
             </div>
           </div>
