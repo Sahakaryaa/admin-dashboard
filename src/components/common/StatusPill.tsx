@@ -2,25 +2,30 @@
 // Semantic status pill component with active pulse indicators
 import React from 'react';
 import {
-  Clock,
   CheckCircle2,
   AlertCircle,
   Activity,
   UserCheck,
   XCircle,
   Radio,
+  MapPin,
 } from 'lucide-react';
 
 export type GeneralStatus =
-  | 'requested'
-  | 'matched'
-  | 'in_progress'
+  // Booking lifecycle (backend models/booking.py)
+  | 'pending'
+  | 'accepted'
+  | 'declined'
+  | 'en_route'
+  | 'arrived'
+  | 'started'
   | 'completed'
-  | 'rated'
+  | 'cancelled'
+  // Worker Availability
   | 'online'
   | 'offline'
+  // Certification & Welfare Claim statuses
   | 'verified'
-  | 'pending'
   | 'approved'
   | 'rejected';
 
@@ -51,32 +56,58 @@ export const StatusPill: React.FC<StatusPillProps> = ({
       pulse?: boolean;
     }
   > = {
-    // Live Booking statuses
-    requested: {
+    // Live Booking statuses (backend lifecycle)
+    pending: {
       bg: 'bg-[#FEF3C7]',
       text: 'text-[#92400E]',
-      border: 'border-[#F59E0B]/30',
-      dot: 'bg-[#D97706]',
-      icon: <Clock size={12} />,
-      defaultLabel: 'Requested',
+      border: 'border-[#F59E0B]/40',
+      dot: 'bg-[#F59E0B]',
+      icon: <AlertCircle size={12} />,
+      defaultLabel: 'Pending',
       pulse: true,
     },
-    matched: {
+    accepted: {
       bg: 'bg-[#E0F2FE]',
       text: 'text-[#075985]',
       border: 'border-[#0284C7]/30',
       dot: 'bg-[#0284C7]',
       icon: <UserCheck size={12} />,
-      defaultLabel: 'Worker Matched',
+      defaultLabel: 'Accepted',
       pulse: true,
     },
-    in_progress: {
+    declined: {
+      bg: 'bg-[#FEE2E2]',
+      text: 'text-[#991B1B]',
+      border: 'border-[#EF4444]/30',
+      dot: 'bg-[#EF4444]',
+      icon: <XCircle size={12} />,
+      defaultLabel: 'Declined',
+    },
+    en_route: {
       bg: 'bg-[#FFF1EB]',
       text: 'text-[#C2410C]',
       border: 'border-[#FF6B35]/40',
       dot: 'bg-[#FF6B35]',
       icon: <Activity size={12} />,
-      defaultLabel: 'In Progress',
+      defaultLabel: 'En Route',
+      pulse: true,
+    },
+    arrived: {
+      bg: 'bg-[#FFF9EB]',
+      text: 'text-[#B45309]',
+      border: 'border-[#FFC145]/40',
+      dot: 'bg-[#FFC145]',
+      icon: <MapPin size={12} />,
+      defaultLabel: 'Arrived',
+      pulse: true,
+    },
+    started: {
+      bg: 'bg-[#FFF1EB]',
+      text: 'text-[#C2410C]',
+      border: 'border-[#FF6B35]/40',
+      dot: 'bg-[#FF6B35]',
+      icon: <Activity size={12} />,
+      defaultLabel: 'Work Started',
       pulse: true,
     },
     completed: {
@@ -87,13 +118,13 @@ export const StatusPill: React.FC<StatusPillProps> = ({
       icon: <CheckCircle2 size={12} />,
       defaultLabel: 'Completed',
     },
-    rated: {
-      bg: 'bg-[#FFF9EB]',
-      text: 'text-[#B45309]',
-      border: 'border-[#FFC145]/40',
-      dot: 'bg-[#FFC145]',
-      icon: <CheckCircle2 size={12} />,
-      defaultLabel: 'Rated ★',
+    cancelled: {
+      bg: 'bg-gray-100',
+      text: 'text-gray-600',
+      border: 'border-gray-300',
+      dot: 'bg-gray-400',
+      icon: <XCircle size={12} />,
+      defaultLabel: 'Cancelled',
     },
 
     // Worker Availability
@@ -123,15 +154,6 @@ export const StatusPill: React.FC<StatusPillProps> = ({
       dot: 'bg-[#FFC145]',
       icon: <CheckCircle2 size={12} className="text-[#FFC145]" />,
       defaultLabel: 'Verified',
-    },
-    pending: {
-      bg: 'bg-[#FEF3C7]',
-      text: 'text-[#92400E]',
-      border: 'border-[#F59E0B]/40',
-      dot: 'bg-[#F59E0B]',
-      icon: <AlertCircle size={12} />,
-      defaultLabel: 'Pending Review',
-      pulse: true,
     },
     approved: {
       bg: 'bg-[#E8F8F0]',

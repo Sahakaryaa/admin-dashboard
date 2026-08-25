@@ -100,7 +100,19 @@ export const LiveBookings: React.FC = () => {
     return matchesSearch && matchesStatus && matchesService;
   });
 
-  const statuses: BookingStatus[] = ['requested', 'matched', 'in_progress', 'completed', 'rated'];
+  // Full backend lifecycle (filter dropdown + admin override buttons)
+  const allStatuses: BookingStatus[] = [
+    'pending',
+    'accepted',
+    'declined',
+    'en_route',
+    'arrived',
+    'started',
+    'completed',
+    'cancelled',
+  ];
+  // Forward-only lifecycle shown by the stepper (declined/cancelled are exits)
+  const lifecycleSteps: BookingStatus[] = ['pending', 'accepted', 'started', 'completed'];
 
   return (
     <div className="space-y-6 animate-slide-up-fade">
@@ -167,11 +179,11 @@ export const LiveBookings: React.FC = () => {
             className="w-full py-2 px-3 bg-[#F7F3E9]/50 border border-[#1B4B43]/20 rounded-xl text-xs font-semibold text-[#1A1A1A] focus:outline-none focus:ring-2 focus:ring-[#1B4B43]"
           >
             <option value="all">All Statuses ({bookings.length})</option>
-            <option value="requested">Requested</option>
-            <option value="matched">Matched</option>
-            <option value="in_progress">In Progress</option>
-            <option value="completed">Completed</option>
-            <option value="rated">Rated</option>
+            {allStatuses.map((st) => (
+              <option key={st} value={st}>
+                {st.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())}
+              </option>
+            ))}
           </select>
         </div>
 
@@ -342,8 +354,8 @@ export const LiveBookings: React.FC = () => {
                 <div className="flex items-center justify-between relative">
                   {/* Connecting Line */}
                   <div className="absolute top-1/2 left-4 right-4 h-0.5 bg-[#1B4B43]/20 -translate-y-1/2 z-0" />
-                  {statuses.map((st, idx) => {
-                    const currentIdx = statuses.indexOf(selectedBooking.status);
+                  {lifecycleSteps.map((st, idx) => {
+                    const currentIdx = lifecycleSteps.indexOf(selectedBooking.status);
                     const isCompleted = currentIdx >= idx;
                     const isCurrent = currentIdx === idx;
                     return (
@@ -366,6 +378,11 @@ export const LiveBookings: React.FC = () => {
                     );
                   })}
                 </div>
+                {(selectedBooking.status === 'declined' || selectedBooking.status === 'cancelled') && (
+                  <div className="mt-2 text-[11px] font-bold text-[#991B1B] capitalize">
+                    This booking was {selectedBooking.status}.
+                  </div>
+                )}
               </div>
 
               {/* Customer & Location Details */}
@@ -441,8 +458,8 @@ export const LiveBookings: React.FC = () => {
                 <div className="text-xs font-bold text-[#1A1A1A] uppercase font-display mb-2">
                   Federation State Override
                 </div>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
-                  {statuses.map((st) => (
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+                  {allStatuses.map((st) => (
                     <button
                       key={st}
                       onClick={() => handleAdminStatusChange(selectedBooking.id, st)}

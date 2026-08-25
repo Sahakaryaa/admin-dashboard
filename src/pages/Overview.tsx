@@ -25,7 +25,6 @@ import {
   Cell,
 } from 'recharts';
 import { useAuth } from '../context/AuthContext';
-import { useSocket } from '../context/SocketContext';
 import { api } from '../api/endpoints';
 import type { FederationOverview, Booking } from '../types';
 import { KpiCard } from '../components/common/KpiCard';
@@ -36,7 +35,6 @@ import { ErrorState } from '../components/common/ErrorState';
 
 export const Overview: React.FC = () => {
   const { currentFederation } = useAuth();
-  const { liveUpdatesCount } = useSocket();
 
   const [overview, setOverview] = useState<FederationOverview | null>(null);
   const [liveBookings, setLiveBookings] = useState<Booking[]>([]);
@@ -60,9 +58,13 @@ export const Overview: React.FC = () => {
     }
   };
 
+  // Refetch when the federation changes. Live socket events no longer trigger
+  // a full HTTP refetch (that caused two requests per event); the KPI numbers
+  // refresh via manual Refresh or federation switch instead.
   useEffect(() => {
     fetchDashboardData();
-  }, [currentFederation?.id, liveUpdatesCount]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentFederation?.id]);
 
   // DEMO PLACEHOLDER — hardcoded sample series, not fetched from the backend
   const revenueTrendData = [

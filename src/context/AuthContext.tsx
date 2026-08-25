@@ -10,6 +10,7 @@ interface AuthContextType {
   federationsList: Federation[];
   isAuthenticated: boolean;
   isLoading: boolean;
+  token: string | null;
   login: (phone: string, pass: string) => Promise<void>;
   loginDemo: () => Promise<void>;
   logout: () => void;
@@ -99,6 +100,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         federationsList,
         isAuthenticated: !!session,
         isLoading,
+        token: session?.access_token ?? null,
         login,
         loginDemo,
         logout,

@@ -225,7 +225,7 @@ export const DEMO_BOOKINGS: Booking[] = [
     worker_name: 'Ramesh Kumar',
     worker_phone: '+91 98111 00001',
     service_type: 'electrician',
-    status: 'in_progress',
+    status: 'started',
     lat: 28.6145,
     lng: 77.2095,
     address: 'Flat 402, Block C, Barakhamba Road, Connaught Place, New Delhi',
@@ -243,7 +243,7 @@ export const DEMO_BOOKINGS: Booking[] = [
     worker_name: 'Suresh Patel',
     worker_phone: '+91 98111 00002',
     service_type: 'plumber',
-    status: 'matched',
+    status: 'accepted',
     lat: 28.621,
     lng: 77.216,
     address: 'B-12, Janpath Enclave, New Delhi',
@@ -258,7 +258,7 @@ export const DEMO_BOOKINGS: Booking[] = [
     customer_name: 'Sneha Nair',
     customer_phone: '+91 98765 00003',
     service_type: 'cleaner',
-    status: 'requested',
+    status: 'pending',
     lat: 28.609,
     lng: 77.224,
     address: '14/3 Lodhi Colony, New Delhi',
@@ -276,7 +276,7 @@ export const DEMO_BOOKINGS: Booking[] = [
     worker_name: 'Sunita Verma',
     worker_phone: '+91 98111 00005',
     service_type: 'caregiver',
-    status: 'in_progress',
+    status: 'started',
     lat: 28.604,
     lng: 77.196,
     address: 'Pocket 2, Mayur Vihar Phase 1, New Delhi',
@@ -414,22 +414,19 @@ export const DEMO_WELFARE: FederationWelfareOverview = {
   ],
 };
 
-// Shape mirrors the contract: GET /forecast/{region} (snake_case, nested model_info)
+// Shape mirrors the backend: GET /forecast/predictions (schemas/forecast.py)
 export const DEMO_FORECAST: ForecastResponse = {
   region: 'north',
-  daily_forecast: [
-    { date: '2026-08-25', predicted_bookings: 9, day_of_week: 'Tuesday', is_weekend: false },
-    { date: '2026-08-26', predicted_bookings: 10, day_of_week: 'Wednesday', is_weekend: false },
-    { date: '2026-08-27', predicted_bookings: 11, day_of_week: 'Thursday', is_weekend: false },
-    { date: '2026-08-28', predicted_bookings: 12, day_of_week: 'Friday', is_weekend: false },
-    { date: '2026-08-29', predicted_bookings: 16, day_of_week: 'Saturday', is_weekend: true },
-    { date: '2026-08-30', predicted_bookings: 15, day_of_week: 'Sunday', is_weekend: true },
-    { date: '2026-08-31', predicted_bookings: 8, day_of_week: 'Monday', is_weekend: false },
+  service_type: 'electrician',
+  historical_avg: 11.57,
+  predictions: [
+    { date: '2026-08-25', predicted_demand: 9 },
+    { date: '2026-08-26', predicted_demand: 10 },
+    { date: '2026-08-27', predicted_demand: 11 },
+    { date: '2026-08-28', predicted_demand: 12 },
+    { date: '2026-08-29', predicted_demand: 16 },
+    { date: '2026-08-30', predicted_demand: 15 },
+    { date: '2026-08-31', predicted_demand: 8 },
   ],
-  model_info: {
-    model_type: 'GradientBoostingRegressor (Ensemble Trees)',
-    metrics: { mae: 0.84, rmse: 1.12, r2: 0.958 },
-    train_samples: 2880,
-    training_timestamp: new Date(Date.now() - 2 * 3600000).toISOString(),
-  },
+  model_type: 'GradientBoostingRegressor / RandomForest (Trained)',
 };

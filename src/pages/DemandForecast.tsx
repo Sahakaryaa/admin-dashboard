@@ -21,9 +21,19 @@ import {
 } from 'recharts';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../api/endpoints';
-import type { ForecastResponse } from '../types';
+import type { ForecastResponse, ModelInfoResponse, DayForecast } from '../types';
 import { ChartSkeleton } from '../components/common/SkeletonLoader';
 import { ErrorState } from '../components/common/ErrorState';
+
+// Backend predictions carry only dates — derive display helpers client-side.
+const dayOfWeek = (dateStr: string) => {
+  const d = new Date(`${dateStr}T00:00:00`);
+  return Number.isNaN(d.getTime()) ? '' : d.toLocaleDateString('en-US', { weekday: 'long' });
+};
+const isWeekend = (dateStr: string) => {
+  const d = new Date(`${dateStr}T00:00:00`);
+  return !Number.isNaN(d.getTime()) && (d.getDay() === 0 || d.getDay() === 6);
+};
 
 export const DemandForecast: React.FC = () => {
   const { currentFederation } = useAuth();
@@ -31,14 +41,18 @@ export const DemandForecast: React.FC = () => {
   const [region, setRegion] = useState('north');
   const [serviceType, setServiceType] = useState('electrician');
   const [forecastData, setForecastData] = useState<ForecastResponse | null>(null);
+  const [modelInfo, setModelInfo] = useState<ModelInfoResponse | null>(null);
 
   const [loading, setLoading] = useState(true);
   const [training, setTraining] = useState(false);
   const [trainResult, setTrainResult] = useState<any | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // Contract nests model_info inside the forecast response
-  const modelInfo = forecastData?.model_info ?? null;
+  // Model info comes from its own endpoint; fall back to demo metrics when absent.
+  const fetchModelInfo = async () => {
+    const info = await api.getModelInfo();
+    setModelInfo(info);
+  };
 
   const fetchForecast = async () => {
     setLoading(true);
@@ -55,6 +69,7 @@ export const DemandForecast: React.FC = () => {
 
   useEffect(() => {
     fetchForecast();
+    fetchModelInfo();
   }, [region, serviceType, currentFederation?.id]);
 
   const handleRetrainModel = async () => {
@@ -88,10 +103,16 @@ export const DemandForecast: React.FC = () => {
     { id: 'painter', label: 'Painter' },
   ];
 
-  // Derived stats from the real forecast payload
-  const daily = forecastData?.daily_forecast ?? [];
+  // Derived stats from the real forecast payload (backend: predictions[].predicted_demand)
+  const daily: DayForecast[] = forecastData?.predictions ?? [];
+  const chartData = daily.map((d) => ({
+    ...d,
+    day_of_week: dayOfWeek(d.date),
+    is_weekend: isWeekend(d.date),
+    predicted_bookings: d.predicted_demand,
+  }));
   const peakDay = daily.length
-    ? daily.reduce((a, b) => (b.predicted_bookings > a.predicted_bookings ? b : a))
+    ? daily.reduce((a, b) => (b.predicted_demand > a.predicted_demand ? b : a))
     : null;
 
   return (
@@ -132,7 +153,7 @@ export const DemandForecast: React.FC = () => {
             <span>{trainResult.message}</span>
           </div>
           <div className="font-mono text-[11px] font-bold">
-            MAE: {trainResult.mae?.toFixed(2) ?? '—'} | R²: {trainResult.r2?.toFixed(3) ?? '—'}
+            MAE: {trainResult.mae?.toFixed(2) ?? '—'} | R²: {trainResult.r2_score?.toFixed(3) ?? '—'}
           </div>
         </div>
       )}
@@ -218,16 +239,16 @@ export const DemandForecast: React.FC = () => {
           ) : (
             <div className="h-72 w-full pt-4">
               <ResponsiveContainer width="100%" height="100%">
-                <ComposedChart data={forecastData.daily_forecast} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+                <ComposedChart data={chartData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(27, 75, 67, 0.06)" vertical={false} />
                   <XAxis
-                    dataKey="day_of_week"
+                    dataKey="date"
                     stroke="#5A6065"
                     fontSize={11}
                     tickLine={false}
-                    tickFormatter={(val: string, i: number) => val || forecastData.daily_forecast[i]?.date.slice(5) || ''}
+                    tickFormatter={(val: string) => (typeof val === 'string' && val.length >= 10 ? val.slice(5) : String(val))}
                   />
-                  <YAxis stroke="#5A6065" fontSize={11} tickLine={false} />
+                  <YAxis stroke="#5A6065" fontSize={11} tickLine={false} allowDecimals={false} />
                   <Tooltip
                     contentStyle={{
                       backgroundColor: '#FFFFFF',
@@ -267,14 +288,14 @@ export const DemandForecast: React.FC = () => {
               <Flame size={14} className="text-[#FF6B35]" />
               <span>
                 {peakDay
-                  ? `Peak Demand: ${peakDay.day_of_week || peakDay.date} — ${peakDay.predicted_bookings} projected bookings${
-                      peakDay.is_weekend ? ' (weekend surge)' : ''
+                  ? `Peak Demand: ${dayOfWeek(peakDay.date) || peakDay.date} — ${peakDay.predicted_demand} projected bookings${
+                      isWeekend(peakDay.date) ? ' (weekend surge)' : ''
                     }`
                   : 'Peak demand will appear once forecast data loads'}
               </span>
             </div>
             <span className="text-[11px] text-[#1A1A1A]/50 font-mono">
-              {daily.length} days projected{modelInfo ? ` • trained ${new Date(modelInfo.training_timestamp).toLocaleDateString()}` : ''}
+              {daily.length} days projected{modelInfo?.training_timestamp ? ` • trained ${new Date(modelInfo.training_timestamp).toLocaleDateString()}` : ''}
             </span>
           </div>
         </div>
@@ -297,29 +318,32 @@ export const DemandForecast: React.FC = () => {
           <div className="space-y-2.5">
             <div className="p-3 rounded-2xl bg-[#1B4B43]/5 border border-[#1B4B43]/10 flex justify-between items-center">
               <span className="text-xs font-bold text-[#1A1A1A]/70">Model Architecture</span>
-              <span className="text-xs font-extrabold text-[#1B4B43] font-mono">
-                {modelInfo?.model_type || 'GradientBoosting'}
+              <span className="text-xs font-extrabold text-[#1B4B43] font-mono text-right">
+                {forecastData?.model_type || modelInfo?.model_type || 'GradientBoosting'}
               </span>
             </div>
 
             <div className="p-3 rounded-2xl bg-[#E8F8F0] border border-[#1E824C]/20 flex justify-between items-center">
               <span className="text-xs font-bold text-[#1E824C]">Model Accuracy (R² Score)</span>
               <span className="text-sm font-extrabold text-[#1E824C] font-mono">
-                {modelInfo?.metrics.r2 != null ? modelInfo.metrics.r2.toFixed(3) : '—'}
+                {modelInfo?.metrics?.r2_score != null ? Number(modelInfo.metrics.r2_score).toFixed(3) : '—'}
               </span>
             </div>
 
             <div className="p-3 rounded-2xl bg-[#FFF1EB] border border-[#FF6B35]/20 flex justify-between items-center">
               <span className="text-xs font-bold text-[#C2410C]">Mean Absolute Error (MAE)</span>
               <span className="text-sm font-extrabold text-[#C2410C] font-mono">
-                {modelInfo?.metrics.mae != null ? `${modelInfo.metrics.mae.toFixed(2)} bookings/day` : '—'}
+                {modelInfo?.metrics?.mae != null ? `${Number(modelInfo.metrics.mae).toFixed(2)} bookings/day` : '—'}
               </span>
             </div>
 
             <div className="p-3 rounded-2xl bg-gray-50 border border-gray-200 flex justify-between items-center">
               <span className="text-xs font-bold text-gray-700">Trained Booking Samples</span>
               <span className="text-xs font-bold text-gray-900 font-mono">
-                {modelInfo?.train_samples != null ? modelInfo.train_samples.toLocaleString() : '—'}
+                {(() => {
+                  const samples = modelInfo?.train_samples ?? modelInfo?.dataset_records;
+                  return samples != null ? samples.toLocaleString() : '—';
+                })()}
               </span>
             </div>
           </div>
@@ -328,34 +352,40 @@ export const DemandForecast: React.FC = () => {
           <div>
             <h4 className="text-xs font-bold text-[#1A1A1A] uppercase tracking-wider mb-2 font-display flex items-center gap-1.5">
               <span>Feature Importance Ranking</span>
-              <span className="text-[9px] px-1.5 py-0.5 rounded bg-[#FFF1EB] text-[#FF6B35] font-bold normal-case tracking-normal">
-                demo
-              </span>
+              {!(modelInfo?.feature_importances && Object.keys(modelInfo.feature_importances).length > 0) && (
+                <span className="text-[9px] px-1.5 py-0.5 rounded bg-[#FFF1EB] text-[#FF6B35] font-bold normal-case tracking-normal">
+                  demo
+                </span>
+              )}
             </h4>
             <div className="space-y-1.5 text-xs font-body">
-              <div className="flex justify-between items-center">
-                <span className="text-[#1A1A1A]/70">7-Day Rolling Booking Average</span>
-                <span className="font-mono font-bold text-[#1B4B43]">42%</span>
-              </div>
-              <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
-                <div className="bg-[#1B4B43] h-1.5 rounded-full" style={{ width: '42%' }} />
-              </div>
-
-              <div className="flex justify-between items-center pt-1">
-                <span className="text-[#1A1A1A]/70">Weekend & Seasonality Multiplier</span>
-                <span className="font-mono font-bold text-[#FF6B35]">23%</span>
-              </div>
-              <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
-                <div className="bg-[#FF6B35] h-1.5 rounded-full" style={{ width: '23%' }} />
-              </div>
-
-              <div className="flex justify-between items-center pt-1">
-                <span className="text-[#1A1A1A]/70">Trade Service Type Encoding</span>
-                <span className="font-mono font-bold text-[#FFC145]">16%</span>
-              </div>
-              <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
-                <div className="bg-[#FFC145] h-1.5 rounded-full" style={{ width: '16%' }} />
-              </div>
+              {(modelInfo?.feature_importances && Object.keys(modelInfo.feature_importances).length > 0
+                ? Object.entries(modelInfo.feature_importances)
+                    .sort((a, b) => b[1] - a[1])
+                    .slice(0, 3)
+                    .map(([feature, importance]) => ({
+                      label: feature.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()),
+                      pct: Math.round(importance * 100),
+                      color: '#1B4B43',
+                    }))
+                : [
+                    { label: '7-Day Rolling Booking Average', pct: 42, color: '#1B4B43' },
+                    { label: 'Weekend & Seasonality Multiplier', pct: 23, color: '#FF6B35' },
+                    { label: 'Trade Service Type Encoding', pct: 16, color: '#FFC145' },
+                  ]
+              ).map((f) => (
+                <div key={f.label}>
+                  <div className="flex justify-between items-center">
+                    <span className="text-[#1A1A1A]/70">{f.label}</span>
+                    <span className="font-mono font-bold" style={{ color: f.color }}>
+                      {f.pct}%
+                    </span>
+                  </div>
+                  <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden mt-0.5">
+                    <div className="h-1.5 rounded-full" style={{ width: `${f.pct}%`, backgroundColor: f.color }} />
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>

@@ -52,7 +52,7 @@ const rawApiUrl = (import.meta.env.VITE_API_URL as string | undefined) || '';
 const SOCKET_URL = rawApiUrl ? rawApiUrl.replace(/\/api\/?$/, '') : window.location.origin;
 
 export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { currentFederation } = useAuth();
+  const { currentFederation, token } = useAuth();
   const [socket, setSocket] = useState<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [liveUpdatesCount, setLiveUpdatesCount] = useState(0);
@@ -60,13 +60,17 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [latestNewBooking, setLatestNewBooking] = useState<NewBookingEvent | null>(null);
   const [liveWorkerLocations, setLiveWorkerLocations] = useState<Record<string, { lat: number; lng: number }>>({});
 
-  // Single long-lived connection
+  // Single long-lived connection. The JWT travels in the handshake `auth`
+  // payload — the backend refuses unauthenticated socket connections.
   useEffect(() => {
+    if (!token) return;
+
     const socketInstance = io(SOCKET_URL, {
       path: '/socket.io',
       transports: ['websocket', 'polling'],
       reconnectionAttempts: 5,
       timeout: 5000,
+      auth: { token },
     });
 
     socketInstance.on('connect', () => {
@@ -113,8 +117,10 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
     return () => {
       socketInstance.disconnect();
+      setSocket(null);
+      setIsConnected(false);
     };
-  }, []);
+  }, [token]);
 
   // Join the active federation room whenever the connection or selection changes.
   // Contract: client emits `join_federation` with {federation_id}.

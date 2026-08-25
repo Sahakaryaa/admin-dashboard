@@ -54,12 +54,17 @@ export interface Worker {
   distance_m?: number;
 }
 
+// Backend lifecycle per models/booking.py: pending | accepted | declined |
+// en_route | arrived | started | completed | cancelled
 export type BookingStatus =
-  | 'requested'
-  | 'matched'
-  | 'in_progress'
+  | 'pending'
+  | 'accepted'
+  | 'declined'
+  | 'en_route'
+  | 'arrived'
+  | 'started'
   | 'completed'
-  | 'rated';
+  | 'cancelled';
 
 export interface Booking {
   id: string;
@@ -69,7 +74,9 @@ export interface Booking {
   worker_id?: string;
   worker_name?: string;
   worker_phone?: string;
+  worker_rating?: number;
   service_type: string;
+  description?: string;
   status: BookingStatus;
   lat: number;
   lng: number;
@@ -77,6 +84,9 @@ export interface Booking {
   scheduled_time?: string;
   is_emergency: boolean;
   price: number;
+  rating?: number;
+  rating_comment?: string;
+  payment_status?: string;
   created_at: string;
   updated_at?: string;
 }
@@ -120,32 +130,33 @@ export interface FederationWelfareOverview {
   recent_transactions: WelfareTransaction[];
 }
 
-// Contract: GET /forecast/{region} -> snake_case shape with nested model_info
+// Backend shape: GET /forecast/predictions -> ForecastResponse (schemas/forecast.py)
 export interface DayForecast {
   date: string;
-  predicted_bookings: number;
-  day_of_week?: string;
-  is_weekend?: boolean;
-}
-
-export interface ForecastModelMetrics {
-  mae: number;
-  rmse: number;
-  r2: number;
-}
-
-export interface ForecastModelInfo {
-  model_type: string;
-  metrics: ForecastModelMetrics;
-  train_samples: number;
-  training_timestamp: string;
+  predicted_demand: number;
+  service_type?: string;
+  region?: string;
 }
 
 export interface ForecastResponse {
   region: string;
-  daily_forecast: DayForecast[];
-  model_info: ForecastModelInfo;
+  service_type: string;
+  historical_avg: number;
+  predictions: DayForecast[];
+  model_type: string;
 }
 
-// Alias kept for callers that only need the nested model info block
-export type ModelInfo = ForecastModelInfo;
+// Backend shape: GET /forecast/model-info
+export interface ModelInfoResponse {
+  model_type: string;
+  training_timestamp?: string;
+  dataset_records?: number;
+  train_samples?: number;
+  test_samples?: number;
+  features?: string[];
+  metrics?: { mae?: number; rmse?: number; r2_score?: number };
+  feature_importances?: Record<string, number>;
+}
+
+// Alias kept for callers that only need the model info block
+export type ModelInfo = ModelInfoResponse;
