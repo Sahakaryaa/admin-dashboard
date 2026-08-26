@@ -1,5 +1,5 @@
 // components/common/KpiCard.tsx
-// Reusable KPI card with staggered fade+slide-up animation as required in 07-ai-agent-rules.md §5
+// Reusable KPI card with glassmorphism and staggered fade+slide-up animation as required in 07-ai-agent-rules.md §5
 import React from 'react';
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
 
@@ -28,10 +28,10 @@ export const KpiCard: React.FC<KpiCardProps> = ({
 }) => {
   return (
     <div
-      className={`rounded-2xl bg-white p-5 shadow-xs border transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 relative overflow-hidden animate-slide-up-fade ${
+      className={`glass-panel rounded-2xl p-5 transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 relative overflow-hidden animate-slide-up-fade ${
         highlight
-          ? 'border-[#1B4B43]/30 bg-linear-to-br from-white to-[#1B4B43]/5 ring-1 ring-[#1B4B43]/15'
-          : 'border-[#1B4B43]/12'
+          ? 'border-[#1B4B43]/30 ring-1 ring-[#1B4B43]/15'
+          : 'border-transparent'
       }`}
       style={{
         animationDelay: `${delayIndex * 60}ms`,
