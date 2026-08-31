@@ -39,21 +39,24 @@ export const Login: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen w-screen flex items-center justify-center bg-[#F7F3E9] p-4 sm:p-6 select-none relative overflow-hidden">
+    <div className="min-h-screen w-screen flex items-center justify-center bg-[#F7FAF8] p-4 sm:p-6 select-none relative overflow-hidden">
       {/* Background architectural geometric shapes */}
-      <div className="absolute -top-32 -right-32 w-96 h-96 rounded-full bg-[#1B4B43]/8 blur-2xl pointer-events-none" />
-      <div className="absolute -bottom-32 -left-32 w-96 h-96 rounded-full bg-[#FF6B35]/8 blur-2xl pointer-events-none" />
+      <div className="absolute -top-32 -right-32 w-96 h-96 rounded-full bg-[#0D5238]/8 blur-2xl pointer-events-none" />
+      <div className="absolute -bottom-32 -left-32 w-96 h-96 rounded-full bg-[#F5A623]/8 blur-2xl pointer-events-none" />
 
-      <div className="w-full max-w-md bg-white rounded-3xl shadow-xl border border-[#1B4B43]/15 p-6 sm:p-8 relative z-10 animate-slide-up-fade">
+      <div className="w-full max-w-md bg-white rounded-3xl shadow-xl border border-[#0D5238]/15 p-6 sm:p-8 relative z-10 animate-slide-up-fade">
         {/* Header Branding */}
         <div className="text-center">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-[#1B4B43] text-white shadow-md mb-4 font-display font-extrabold text-2xl">
-            स
+          <div className="inline-flex items-center justify-center w-24 h-24 rounded-2xl bg-white shadow-lg p-2 mb-3 border border-[#0D5238]/10 mx-auto">
+            <img src="/logo.svg" alt="Sahakarya Sarathi Logo" className="w-full h-full object-contain" />
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-[#1B4B43] font-display tracking-tight">
-            SahaKarya
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-[#0D5238] font-display tracking-tight">
+            Sahakarya
           </h1>
-          <p className="text-xs font-semibold text-[#1A1A1A]/60 font-body mt-1">
+          <div className="text-xs font-black tracking-widest text-[#F5A623] uppercase font-display mt-0.5">
+            SARATHI
+          </div>
+          <p className="text-xs font-semibold text-[#4E6158] font-body mt-1">
             Labour Cooperative Federation Official Portal
           </p>
           <div className="mt-3 flex justify-center">
@@ -62,10 +65,10 @@ export const Login: React.FC = () => {
         </div>
 
         {/* SIH Problem statement context banner */}
-        <div className="mt-5 p-3 rounded-2xl bg-[#1B4B43]/5 border border-[#1B4B43]/12 flex items-center gap-2.5 text-left">
-          <Building2 size={18} className="text-[#1B4B43] shrink-0" />
-          <div className="text-[11px] leading-tight text-[#1A1A1A]/80">
-            <span className="font-bold text-[#1B4B43]">NCCT / Ministry of Cooperation</span>
+        <div className="mt-5 p-3 rounded-2xl bg-[#0D5238]/5 border border-[#0D5238]/12 flex items-center gap-2.5 text-left">
+          <Building2 size={18} className="text-[#0D5238] shrink-0" />
+          <div className="text-[11px] leading-tight text-[#101F19]/80">
+            <span className="font-bold text-[#0D5238]">NCCT / Ministry of Cooperation</span>
             <br />
             SIH26089: Smart Automation for Labour Federations
           </div>

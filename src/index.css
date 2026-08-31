@@ -14,16 +14,16 @@
 }
 
 ::-webkit-scrollbar-track {
-  background: rgba(27, 75, 67, 0.03);
+  background: rgba(13, 82, 56, 0.03);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(27, 75, 67, 0.2);
+  background: rgba(13, 82, 56, 0.2);
   border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(27, 75, 67, 0.4);
+  background: rgba(13, 82, 56, 0.4);
 }
 
 /* Staggered KPI Card animations */
@@ -100,8 +100,8 @@
 
 /* Glassmorphic elements */
 .glass-panel {
-  background: rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.88);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(27, 75, 67, 0.1);
+  border: 1px solid rgba(13, 82, 56, 0.1);
 }

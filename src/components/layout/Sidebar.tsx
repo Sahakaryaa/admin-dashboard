@@ -61,30 +61,30 @@ export const Sidebar: React.FC<SidebarProps> = () => {
   ];
 
   return (
-    <aside className="w-64 h-screen bg-[#1B4B43] text-white flex flex-col justify-between shrink-0 shadow-lg select-none border-r border-[#1B4B43]/30 z-30">
+    <aside className="w-64 h-screen bg-[#0D5238] text-white flex flex-col justify-between shrink-0 shadow-lg select-none border-r border-[#093F2B]/50 z-30">
       {/* Brand & Federation Header */}
       <div>
-        <div className="p-5 border-b border-white/10">
-          <div className="flex items-center gap-2.5">
-            <div className="w-10 h-10 rounded-xl bg-white text-[#1B4B43] flex items-center justify-center font-extrabold text-xl shadow-md font-display tracking-tight">
-              स
+        <div className="p-4 border-b border-white/10">
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 rounded-xl bg-white p-1 flex items-center justify-center shadow-md shrink-0 border border-white/20">
+              <img src="/logo.svg" alt="Sahakarya Logo" className="w-full h-full object-contain" />
             </div>
-            <div className="min-w-0">
+            <div className="min-w-0 flex-1">
               <div className="flex items-center gap-1.5">
                 <span className="font-extrabold text-base tracking-tight font-display text-white">
-                  SahaKarya
+                  Sahakarya
                 </span>
-                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#FFC145] text-[#1B4B43] font-bold">
+                <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-[#F5A623] text-[#093F2B] font-extrabold tracking-wide">
                   ADMIN
                 </span>
               </div>
-              <p className="text-[11px] text-white/70 font-medium truncate">
-                Federation Portal (NCCT)
+              <p className="text-[10px] text-[#F8B63B] font-bold tracking-wider uppercase font-display truncate">
+                SARATHI FEDERATION
               </p>
             </div>
           </div>
 
-          <div className="mt-3.5 pt-3 border-t border-white/10">
+          <div className="mt-3 pt-2.5 border-t border-white/10">
             <CooperativeBadge size="sm" variant="glow" />
           </div>
         </div>
